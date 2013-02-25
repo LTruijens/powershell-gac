@@ -1,0 +1,1 @@
+Update-FormatData -PrependPath (Join-Path $PSScriptRoot 'Gac.Format.ps1xml')
