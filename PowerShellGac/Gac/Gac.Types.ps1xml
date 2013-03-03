@@ -9,6 +9,7 @@
           ($this.GetPublicKeyToken() | ForEach-Object { '{0:x2}' -f $_ }) -join ''
         </GetScriptBlock>
       </ScriptProperty>
+      <!-- DisplayName -->
     </Members>
   </Type>
 </Types>
