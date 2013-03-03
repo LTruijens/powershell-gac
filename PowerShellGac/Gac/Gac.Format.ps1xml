@@ -35,7 +35,7 @@
                 <PropertyName>Version</PropertyName>
               </TableColumnItem>
               <TableColumnItem>
-                <PropertyName>CultureInfo</PropertyName>
+                <PropertyName>CultureName</PropertyName>
               </TableColumnItem>
               <TableColumnItem>
                 <PropertyName>PublicKeyToken</PropertyName>

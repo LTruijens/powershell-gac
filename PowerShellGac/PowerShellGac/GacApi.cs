@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Globalization;
@@ -143,29 +142,11 @@ namespace PowerShellGac
                 IntPtr pvReserced);
     }// IInstallReferenceEnum
 
-    public enum QueryAssemblyInfoFlags
+    internal enum QueryAssemblyInfoFlags
     {
         Default = 0,
         Validate = 1,
         GetSize = 2
-    }
-
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1717:OnlyFlagsEnumsShouldHavePluralNames"), System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1726:UsePreferredTerms", MessageId = "Flags")]
-    public enum AssemblyCommitFlags
-    {
-        Refresh = 1,
-        ForceRefresh = 2
-    }
-
-    public enum AssemblyCacheUninstallDisposition
-    {
-        Unknown = 0,
-        Uninstalled = 1,
-        StillInUse = 2,
-        AlreadyUninstalled = 3,
-        DeletePending = 4,
-        HasInstallReference = 5,
-        ReferenceNotFound = 6
     }
 
     [Flags]
@@ -206,7 +187,7 @@ namespace PowerShellGac
     }
 
     [Flags]
-    public enum AssemblyCompareFlags
+    internal enum AssemblyCompareFlags
     {
         Name = 0x01,
         MajorVersion = 0x02,
@@ -229,7 +210,7 @@ namespace PowerShellGac
         IlNoVersion = Name | PublicKeyToken | Culture
     }
 
-    public enum AssemblyNameProperty
+    internal enum AssemblyNameProperty
     {
         PublicKey = 0,
         PublicKeyToken,
@@ -262,43 +243,7 @@ namespace PowerShellGac
         MaxParams
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public class InstallReference
-    {
-        public InstallReference(Guid guid, String id, String data)
-        {
-            cbSize = (int)(2 * IntPtr.Size + 16 + (id.Length + data.Length) * 2);
-            flags = 0;
-            // quiet compiler warning
-            if (flags == 0) { }
-            guidScheme = guid;
-            identifier = id;
-            description = data;
-        }
-
-        public Guid GuidScheme
-        {
-            get { return guidScheme; }
-        }
-
-        public String Identifier
-        {
-            get { return identifier; }
-        }
-
-        public String Description
-        {
-            get { return description; }
-        }
-
-        int cbSize;
-        int flags;
-        Guid guidScheme;
-        [MarshalAs(UnmanagedType.LPWStr)]
-        String identifier;
-        [MarshalAs(UnmanagedType.LPWStr)]
-        String description;
-    }
+  
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct AssemblyInfo
@@ -312,7 +257,7 @@ namespace PowerShellGac
     }
 
     [ComVisible(false)]
-    public class InstallReferenceGuid
+    internal class InstallReferenceGuid
     {
         public static bool IsValidGuidScheme(Guid guid)
         {
@@ -328,349 +273,5 @@ namespace PowerShellGac
         // these GUIDs cannot be used for installing into GAC.
         public readonly static Guid MsiGuid = new Guid("25df0fc1-7f97-4070-add7-4b13bbfd7cb8");
         public readonly static Guid OsInstallGuid = new Guid("d16d444c-56d8-11d5-882d-0080c847b195");
-    }
-
-    [ComVisible(false)]
-    public static class AssemblyCache
-    {
-        public static void InstallAssembly(String assemblyPath, InstallReference reference, AssemblyCommitFlags flags)
-        {
-            if (reference != null)
-            {
-                if (!InstallReferenceGuid.IsValidGuidScheme(reference.GuidScheme))
-                    throw new ArgumentException("Invalid reference guid.", "guid");
-            }
-
-            IAssemblyCache ac = null;
-
-            int hr = 0;
-
-            hr = FusionWrapper.CreateAssemblyCache(out ac, 0);
-            if (hr >= 0)
-            {
-                hr = ac.InstallAssembly((int)flags, assemblyPath, reference);
-            }
-
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-        }
-
-        // assemblyName has to be fully specified name.
-        // A.k.a, for v1.0/v1.1 assemblies, it should be "name, Version=xx, Culture=xx, PublicKeyToken=xx".
-        // For v2.0 assemblies, it should be "name, Version=xx, Culture=xx, PublicKeyToken=xx, ProcessorArchitecture=xx".
-        // If assemblyName is not fully specified, a random matching assembly will be uninstalled.
-        // TODO: Check if fully specified
-        public static void UninstallAssembly(String assemblyName, InstallReference reference, out AssemblyCacheUninstallDisposition disp)
-        {
-            AssemblyCacheUninstallDisposition dispResult = AssemblyCacheUninstallDisposition.Uninstalled;
-            if (reference != null)
-            {
-                if (!InstallReferenceGuid.IsValidGuidScheme(reference.GuidScheme))
-                    throw new ArgumentException("Invalid reference guid.", "guid");
-            }
-
-            IAssemblyCache ac = null;
-
-            int hr = FusionWrapper.CreateAssemblyCache(out ac, 0);
-            if (hr >= 0)
-            {
-                hr = ac.UninstallAssembly(0, assemblyName, reference, out dispResult);
-            }
-
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-
-            disp = dispResult;
-        }
-
-        // See comments in UninstallAssembly
-        // TODO: Check if fully specified
-        public static String QueryAssemblyInfo(String assemblyName)
-        {
-            if (assemblyName == null)
-            {
-                throw new ArgumentException("Invalid name", "assemblyName");
-            }
-
-            AssemblyInfo aInfo = new AssemblyInfo();
-            // TODO: better length https://sandcastle.svn.codeplex.com/svn/Development/Source/CCI/AssemblyCache.cs
-            aInfo.cchBuf = 1024;
-            // Get a string with the desired length
-            aInfo.currentAssemblyPath = new String('\0', aInfo.cchBuf);
-
-            IAssemblyCache ac = null;
-            int hr = FusionWrapper.CreateAssemblyCache(out ac, 0);
-            if (hr >= 0)
-            {
-                hr = ac.QueryAssemblyInfo(0, assemblyName, ref aInfo);
-            }
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-
-            return aInfo.currentAssemblyPath;
-        }
-
-        public static String GetGacPath()
-        {
-            int bufferSize = 512;
-            StringBuilder buffer = new StringBuilder(bufferSize);
-
-            int hr = FusionWrapper.GetCachePath(AssemblyCacheFlags.Gac, buffer, ref bufferSize);
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-
-            return buffer.ToString();
-        }
-
-        internal static String GetDisplayName(IAssemblyName assemblyName)
-        {
-            StringBuilder sDisplayName = new StringBuilder(1024);
-            int iLen = 1024;
-
-            int hr = assemblyName.GetDisplayName(sDisplayName, ref iLen, AssemblyNameDisplayFlags.Full);
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-
-            return sDisplayName.ToString();
-        }
-
-        internal static byte[] GetPublicKeyToken(IAssemblyName assemblyName)
-        {
-            int bufferSize = 8;
-            IntPtr buffer = Marshal.AllocHGlobal(bufferSize);
-            try
-            {
-                int hr = assemblyName.GetProperty(AssemblyNameProperty.PublicKeyToken, buffer, ref bufferSize);
-                if (hr < 0)
-                {
-                    Marshal.ThrowExceptionForHR(hr);
-                }
-
-                byte[] publicKeyToken = new byte[bufferSize];
-
-                Marshal.Copy(buffer, publicKeyToken, 0, bufferSize);
-
-                return publicKeyToken;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(buffer);
-            }
-        }
-
-        internal static byte[] GetPublicKey(IAssemblyName assemblyName)
-        {
-            int bufferSize = 512;
-            IntPtr buffer = Marshal.AllocHGlobal(bufferSize);
-            try
-            {
-                int hr = assemblyName.GetProperty(AssemblyNameProperty.PublicKey, buffer, ref bufferSize);
-                if (hr < 0)
-                {
-                    Marshal.ThrowExceptionForHR(hr);
-                }
-
-                byte[] publicKey = new byte[bufferSize];
-
-                Marshal.Copy(buffer, publicKey, 0, bufferSize);
-
-                return publicKey;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(buffer);
-            }
-        }
-
-        internal static CultureInfo GetCulture(IAssemblyName assemblyName)
-        {
-            int bufferSize = 512;
-            IntPtr buffer = Marshal.AllocHGlobal(bufferSize);
-            try
-            {
-                int hr = assemblyName.GetProperty(AssemblyNameProperty.Culture, buffer, ref bufferSize);
-                if (hr < 0)
-                {
-                    Marshal.ThrowExceptionForHR(hr);
-                }
-
-                string culture = Marshal.PtrToStringAuto(buffer);
-
-                return new CultureInfo(culture);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(buffer);
-            }
-        }
-
-        public static string GetDisplayName(System.Reflection.AssemblyName assemblyName)
-        {
-            if (assemblyName.ProcessorArchitecture == System.Reflection.ProcessorArchitecture.None)
-                return assemblyName.FullName;
-            else
-              return assemblyName.FullName + ", ProcessorArchitecture=" + assemblyName.ProcessorArchitecture.ToString().ToLower();
-        }
-    }
-
-    [ComVisible(false)]
-    internal class AssemblyCacheEnum
-    {
-        // null means enumerate all the assemblies
-        public AssemblyCacheEnum(String assemblyName)
-        {
-            IAssemblyName fusionName = null;
-            int hr = 0;
-
-            if (assemblyName != null)
-            {
-                hr = FusionWrapper.CreateAssemblyNameObject(
-                        out fusionName,
-                        assemblyName,
-                        CreateAssemblyNameObjectFlags.ParseDisplayName,
-                        IntPtr.Zero);
-            }
-
-            if (hr >= 0)
-            {
-                hr = FusionWrapper.CreateAssemblyEnum(
-                        out m_AssemblyEnum,
-                        IntPtr.Zero,
-                        fusionName,
-                        AssemblyCacheFlags.Gac,
-                        IntPtr.Zero);
-            }
-
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-        }
-
-        public IAssemblyName GetNextAssembly()
-        {
-            int hr = 0;
-            IAssemblyName fusionName = null;
-
-            if (done)
-            {
-                return null;
-            }
-
-            // Now get next IAssemblyName from m_AssemblyEnum
-            hr = m_AssemblyEnum.GetNextAssembly((IntPtr)0, out fusionName, 0);
-
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-
-            done = fusionName == null;
-
-            return fusionName;
-        }
-
-        private IAssemblyEnum m_AssemblyEnum = null;
-        private bool done = false;
-    }// class AssemblyCacheEnum
-
-    public class AssemblyCacheInstallReferenceEnum
-    {
-        public AssemblyCacheInstallReferenceEnum(String assemblyName)
-        {
-            IAssemblyName fusionName = null;
-
-            int hr = FusionWrapper.CreateAssemblyNameObject(
-                        out fusionName,
-                        assemblyName,
-                        CreateAssemblyNameObjectFlags.ParseDisplayName,
-                        IntPtr.Zero);
-
-            if (hr >= 0)
-            {
-                hr = FusionWrapper.CreateInstallReferenceEnum(out refEnum, fusionName, 0, IntPtr.Zero);
-            }
-
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-        }
-
-        public InstallReference GetNextReference()
-        {
-            IInstallReferenceItem item = null;
-            int hr = refEnum.GetNextInstallReferenceItem(out item, 0, IntPtr.Zero);
-            if ((uint)hr == 0x80070103)
-            {   // ERROR_NO_MORE_ITEMS
-                return null;
-            }
-
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-
-            IntPtr refData;
-            InstallReference instRef = new InstallReference(Guid.Empty, String.Empty, String.Empty);
-
-            hr = item.GetReference(out refData, 0, IntPtr.Zero);
-            if (hr < 0)
-            {
-                Marshal.ThrowExceptionForHR(hr);
-            }
-
-            Marshal.PtrToStructure(refData, instRef);
-            return instRef;
-        }
-
-        private IInstallReferenceEnum refEnum;
-    }
-
-    internal class FusionWrapper
-    {
-        [DllImport("fusion.dll")]
-        internal static extern int CreateAssemblyEnum(
-                out IAssemblyEnum ppEnum,
-                IntPtr pUnkReserved,
-                IAssemblyName pName,
-                AssemblyCacheFlags flags,
-                IntPtr pvReserved);
-
-        [DllImport("fusion.dll")]
-        internal static extern int CreateAssemblyNameObject(
-                out IAssemblyName ppAssemblyNameObj,
-                [MarshalAs(UnmanagedType.LPWStr)]
-                 String szAssemblyName,
-                CreateAssemblyNameObjectFlags flags,
-                IntPtr pvReserved);
-
-        [DllImport("fusion.dll")]
-        internal static extern int CreateAssemblyCache(
-                out IAssemblyCache ppAsmCache,
-                int reserved);
-
-        [DllImport("fusion.dll")]
-        internal static extern int CreateInstallReferenceEnum(
-                out IInstallReferenceEnum ppRefEnum,
-                IAssemblyName pName,
-                int dwFlags,
-                IntPtr pvReserved);
-
-        [DllImport("fusion.dll")]
-        internal static extern int GetCachePath(
-            AssemblyCacheFlags assemblyCacheFlags,
-            [MarshalAs(UnmanagedType.LPWStr)] StringBuilder cachePath,
-            ref int cachePathSize);
     }
 }
