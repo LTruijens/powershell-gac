@@ -387,7 +387,7 @@ function Remove-GacAssembly
             }
             Uninstalled
             {
-                Write-Verbose "Removed $dispayName from the GAC"
+                Write-Verbose "Removed $displayName from the GAC"
             }
             StillInUse
             {
