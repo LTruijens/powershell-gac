@@ -21,7 +21,7 @@ namespace PowerShellGac
 
             int hr = 0;
 
-            hr = NativeMethods.CreateAssemblyCache(out ac, 0);
+            hr = GacApi.CreateAssemblyCache(out ac, 0);
             if (hr >= 0)
             {
                 hr = ac.InstallAssembly((int)flags, assemblyPath, reference);
@@ -50,7 +50,7 @@ namespace PowerShellGac
 
             IAssemblyCache ac = null;
 
-            int hr = NativeMethods.CreateAssemblyCache(out ac, 0);
+            int hr = GacApi.CreateAssemblyCache(out ac, 0);
             if (hr >= 0)
             {
                 hr = ac.UninstallAssembly(0, assemblyName, reference, out dispResult);
@@ -81,7 +81,7 @@ namespace PowerShellGac
             aInfo.currentAssemblyPath = new String('\0', aInfo.cchBuf);
 
             IAssemblyCache ac = null;
-            int hr = NativeMethods.CreateAssemblyCache(out ac, 0);
+            int hr = GacApi.CreateAssemblyCache(out ac, 0);
             if (hr >= 0)
             {
                 hr = ac.QueryAssemblyInfo(0, assemblyName, ref aInfo);
@@ -100,7 +100,7 @@ namespace PowerShellGac
             int bufferSize = 512;
             StringBuilder buffer = new StringBuilder(bufferSize);
 
-            int hr = NativeMethods.GetCachePath(AssemblyCacheFlags.Gac, buffer, ref bufferSize);
+            int hr = GacApi.GetCachePath(AssemblyCacheFlags.Gac, buffer, ref bufferSize);
             if (hr < 0)
             {
                 Marshal.ThrowExceptionForHR(hr);

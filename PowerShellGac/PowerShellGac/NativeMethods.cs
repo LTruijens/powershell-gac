@@ -7,38 +7,14 @@ namespace PowerShellGac
 {
     internal static class NativeMethods
     {
-        [DllImport("fusion.dll")]
-        internal static extern int CreateAssemblyEnum(
-                out IAssemblyEnum ppEnum,
-                IntPtr pUnkReserved,
-                IAssemblyName pName,
-                AssemblyCacheFlags flags,
-                IntPtr pvReserved);
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern IntPtr LoadLibrary(string lpFileName);
 
-        [DllImport("fusion.dll")]
-        internal static extern int CreateAssemblyNameObject(
-                out IAssemblyName ppAssemblyNameObj,
-                [MarshalAs(UnmanagedType.LPWStr)]
-                 String szAssemblyName,
-                CreateAssemblyNameObjectFlags flags,
-                IntPtr pvReserved);
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern IntPtr GetProcAddress(IntPtr hModule, [MarshalAs(UnmanagedType.LPStr)] string procName);
 
-        [DllImport("fusion.dll")]
-        internal static extern int CreateAssemblyCache(
-                out IAssemblyCache ppAsmCache,
-                int reserved);
-
-        [DllImport("fusion.dll")]
-        internal static extern int CreateInstallReferenceEnum(
-                out IInstallReferenceEnum ppRefEnum,
-                IAssemblyName pName,
-                int dwFlags,
-                IntPtr pvReserved);
-
-        [DllImport("fusion.dll")]
-        internal static extern int GetCachePath(
-            AssemblyCacheFlags assemblyCacheFlags,
-            [MarshalAs(UnmanagedType.LPWStr)] StringBuilder cachePath,
-            ref int cachePathSize);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool FreeLibrary(IntPtr hModule);
     }
 }

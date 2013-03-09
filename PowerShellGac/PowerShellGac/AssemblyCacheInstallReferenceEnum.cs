@@ -12,7 +12,7 @@ namespace PowerShellGac
         {
             IAssemblyName fusionName = null;
 
-            int hr = NativeMethods.CreateAssemblyNameObject(
+            int hr = GacApi.CreateAssemblyNameObject(
                         out fusionName,
                         assemblyName,
                         CreateAssemblyNameObjectFlags.ParseDisplayName,
@@ -20,7 +20,7 @@ namespace PowerShellGac
 
             if (hr >= 0)
             {
-                hr = NativeMethods.CreateInstallReferenceEnum(out refEnum, fusionName, 0, IntPtr.Zero);
+                hr = GacApi.CreateInstallReferenceEnum(out refEnum, fusionName, 0, IntPtr.Zero);
             }
 
             if (hr < 0)

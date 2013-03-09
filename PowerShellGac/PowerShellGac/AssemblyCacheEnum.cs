@@ -20,7 +20,7 @@ namespace PowerShellGac
 
             if (assemblyName != null)
             {
-                hr = NativeMethods.CreateAssemblyNameObject(
+                hr = GacApi.CreateAssemblyNameObject(
                         out fusionName,
                         assemblyName,
                         CreateAssemblyNameObjectFlags.ParseDisplayName,
@@ -29,7 +29,7 @@ namespace PowerShellGac
 
             if (hr >= 0)
             {
-                hr = NativeMethods.CreateAssemblyEnum(
+                hr = GacApi.CreateAssemblyEnum(
                         out m_AssemblyEnum,
                         IntPtr.Zero,
                         fusionName,
