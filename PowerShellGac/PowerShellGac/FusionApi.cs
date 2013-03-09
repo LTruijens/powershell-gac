@@ -8,7 +8,7 @@ using System.Text;
 
 namespace PowerShellGac
 {
-    internal static class GacApi
+    internal static class FusionApi
     {
         internal static CreateAssemblyEnumMethod CreateAssemblyEnum { get; private set; }
 
@@ -54,7 +54,7 @@ namespace PowerShellGac
             [MarshalAs(UnmanagedType.LPWStr)] StringBuilder cachePath,
             ref int cachePathSize);
         
-        static GacApi()
+        static FusionApi()
         {
             var path = GetLatestFrameworkPath();
 

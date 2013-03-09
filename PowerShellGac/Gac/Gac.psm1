@@ -39,7 +39,7 @@ function Test-AssemblyNameFullyQualified
         [ValidateNotNullOrEmpty()]
         [System.Reflection.AssemblyName] $AssemblyName
     )
-    $AssemblyName.Name -and $AssemblyName.Version -and $AssemblyName.CultureInfo -and $AssemblyName.GetPublicKeyToken()
+	[PowerShellGac.GlobalAssemblyCache]::IsFullyQualifiedAssemblyName($AssemblyName)
 }
 
 <#
@@ -58,7 +58,7 @@ function Test-AssemblyNameFullyQualified
 .PARAMETER ProcessorArchitecture
     Filter on the ProcessorArchitecture part. Supports wildcards.	
 .PARAMETER AssemblyName
-    Filter on AssemblyName
+    Filter on AssemblyName. Must be fully qualified. See Test-AssemblyNameFullyQualified.
 .INPUTS
 	[System.Reflection.AssemblyName]
 .EXAMPLE
@@ -69,6 +69,8 @@ function Test-AssemblyNameFullyQualified
     C:\PS> Get-GacAssembly -Name System* -Version 2.0.0.0
 
     This example returns all assemblies in the GAC with a name starting with System and version 2.0.0.0.
+.LINK
+	Test-AssemblyNameFullyQualified
 .LINK
 	http://powershellgac.codeplex.com
 #>
@@ -99,9 +101,8 @@ function Get-GacAssembly
         [System.Reflection.ProcessorArchitecture] $ProcessorArchitecture,
 
         # TODO: AssemblyName[]
-		# TODO: Validate?
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'AssemblyNameSet')]
-        [ValidateNotNullOrEmpty()]
+        [ValidateScript( { Test-AssemblyNameFullyQualified $_ } )]
         [System.Reflection.AssemblyName] $AssemblyName
 	)
     
@@ -109,20 +110,19 @@ function Get-GacAssembly
     {
         if ($PsCmdlet.ParameterSetName -eq 'AssemblyNameSet')
         {
-            $displayName = [PowerShellGac.AssemblyCache]::GetDisplayName($AssemblyName)
+            $fullyQualifiedAssemblyName = [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($AssemblyName)
         }
         else
         {
-            $displayName = $null
+            $fullyQualifiedAssemblyName = $null
         }
-        $assemblies = New-Object PowerShellGac.AssemblyCacheEnum
     }
 
     process
     {
-        while (($assembly = $assemblies.GetNextAssembly()) -ne $null)
+        foreach ($assembly in [PowerShellGac.GlobalAssemblyCache]::GetAssemblies())
         {
-            if ($displayName -and [PowerShellGac.AssemblyCache]::GetDisplayName($assembly) -ne $displayName)
+            if ($fullyQualifiedAssemblyName -and $assembly.ToString() -eq $fullyQualifiedAssemblyName)
             {
                 continue
             }
@@ -199,8 +199,7 @@ function Get-GacAssemblyFile
 
     process
     {
-        $displayName = [PowerShellGac.AssemblyCache]::GetDisplayName($AssemblyName)
-        $path = [PowerShellGac.AssemblyCache]::QueryAssemblyInfo($displayName);
+        $path = [PowerShellGac.GlobalAssemblyCache]::GetAssemblyPath($AssemblyName);
         [System.IO.FileInfo] $path
     }
 }
@@ -244,12 +243,7 @@ function Get-GacAssemblyInstallReference
 
     process
     {
-        $displayName = [PowerShellGac.AssemblyCache]::GetDisplayName($AssemblyName)
-        $references = New-Object PowerShellGac.AssemblyCacheInstallReferenceEnum $displayName
-        while (($reference = $references.GetNextReference()) -ne $null)
-        {
-            $reference
-        }
+        [PowerShellGac.GlobalAssemblyCache]::GetInstallReferences($AssemblyName)
     }
 }
 
@@ -317,7 +311,7 @@ function Add-GacAssembly
 
         $Path = Resolve-Path $Path
 
-        [PowerShellGac.AssemblyCache]::InstallAssembly($Path, $InstallReference, $flags);
+        [PowerShellGac.GlobalAssemblyCache]::InstallAssembly($Path, $InstallReference, $flags);
         Write-Verbose "Installed $Path into the GAC"
 
         if ($PassThru)
@@ -370,14 +364,14 @@ function Remove-GacAssembly
 
     process
     {
-        $displayName = [PowerShellGac.AssemblyCache]::GetDisplayName($AssemblyName)
+        $fullyQualifiedAssemblyName = [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($AssemblyName)
 
-        if (!$PSCmdLet.ShouldProcess($displayName))
+        if (!$PSCmdLet.ShouldProcess($fullyQualifiedAssemblyName))
         {
             return;
         }
 
-        $disp = [PowerShellGac.AssemblyCache]::UninstallAssembly($displayName, $InstallReference) 
+        $disp = [PowerShellGac.GlobalAssemblyCache]::UninstallAssembly($AssemblyName, $InstallReference) 
         
         switch ($disp)
         {
@@ -387,7 +381,7 @@ function Remove-GacAssembly
             }
             Uninstalled
             {
-                Write-Verbose "Removed $displayName from the GAC"
+                Write-Verbose "Removed $fullyQualifiedAssemblyName from the GAC"
             }
             StillInUse
             {
