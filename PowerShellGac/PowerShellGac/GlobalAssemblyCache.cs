@@ -30,8 +30,16 @@ namespace PowerShellGac
             int bufferSize = 512;
             StringBuilder buffer = new StringBuilder(bufferSize);
 
-            // TODO: Get better length
-            ComCheck(FusionApi.GetCachePath(AssemblyCacheFlags.Gac, buffer, ref bufferSize));
+            int hResult = FusionApi.GetCachePath(AssemblyCacheFlags.Gac, buffer, ref bufferSize);
+            if ((uint)hResult == 0x8007007A)  // ERROR_INSUFFICIENT_BUFFER
+            {
+                buffer = new StringBuilder(bufferSize);
+                ComCheck(FusionApi.GetCachePath(AssemblyCacheFlags.Gac, buffer, ref bufferSize));
+            }
+            else
+            {
+                ComCheck(hResult);
+            }
 
             return buffer.ToString();
         }
@@ -93,12 +101,12 @@ namespace PowerShellGac
             IInstallReferenceItem item = null;
             do
             {
-                int hr = installReferenceEnum.GetNextInstallReferenceItem(out item, 0, IntPtr.Zero);
-                if ((uint)hr == 0x80070103)  // ERROR_NO_MORE_ITEMS
+                int hResult = installReferenceEnum.GetNextInstallReferenceItem(out item, 0, IntPtr.Zero);
+                if ((uint)hResult == 0x80070103)  // ERROR_NO_MORE_ITEMS
                 {
                     yield break;
                 }
-                ComCheck(hr);
+                ComCheck(hResult);
 
                 IntPtr refData;
                 ComCheck(item.GetReference(out refData, 0, IntPtr.Zero));
@@ -109,6 +117,7 @@ namespace PowerShellGac
             } while (true);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
         public static String GetAssemblyPath(AssemblyName assemblyName)
         {
             if (assemblyName == null)
@@ -120,17 +129,25 @@ namespace PowerShellGac
                 throw new ArgumentOutOfRangeException("assemblyName", assemblyName, "Must be a fully qualified assembly name");
             }
 
-            AssemblyInfo aInfo = new AssemblyInfo();
-            // TODO: better length https://sandcastle.svn.codeplex.com/svn/Development/Source/CCI/AssemblyCache.cs
-            aInfo.cchBuf = 1024;
-            // Get a string with the desired length
-            aInfo.currentAssemblyPath = new String('\0', aInfo.cchBuf);
-
             var assemblyCache = GetAssemblyCache();
 
-            ComCheck(assemblyCache.QueryAssemblyInfo(0, assemblyName.GetFullyQualifiedName(), ref aInfo));
+            AssemblyInfo info = new AssemblyInfo();
+            info.cbAssemblyInfo = Marshal.SizeOf(typeof(AssemblyInfo));
+            info.cchBuf = 1024;
+            info.currentAssemblyPath = new String('\0', info.cchBuf);
 
-            return aInfo.currentAssemblyPath;
+            int hResult = assemblyCache.QueryAssemblyInfo(QueryAssemblyInfoFlags.Default, assemblyName.GetFullyQualifiedName(), ref info);
+            if ((uint)hResult == 0x8007007A)  // ERROR_INSUFFICIENT_BUFFER
+            {
+                info.currentAssemblyPath = new String('\0', info.cchBuf);
+                ComCheck(assemblyCache.QueryAssemblyInfo(QueryAssemblyInfoFlags.Default, assemblyName.GetFullyQualifiedName(), ref info));
+            }
+            else
+            {
+                ComCheck(hResult);
+            }
+
+            return info.currentAssemblyPath;
         }
 
         public static string GetFullyQualifiedAssemblyName(AssemblyName assemblyName)
@@ -145,24 +162,32 @@ namespace PowerShellGac
 
         private static String GetDisplayName(IAssemblyName assemblyName)
         {
-            StringBuilder sDisplayName = new StringBuilder(1024);
-            int iLen = 1024;
+            int bufferSize = 1024;
+            StringBuilder buffer = new StringBuilder(bufferSize);
 
-            // TODO: Get better length
-            ComCheck(assemblyName.GetDisplayName(sDisplayName, ref iLen, AssemblyNameDisplayFlags.Full));
+            int hResult = assemblyName.GetDisplayName(buffer, ref bufferSize, AssemblyNameDisplayFlags.Full);
+            if ((uint)hResult == 0x8007007A)  // ERROR_INSUFFICIENT_BUFFER
+            {
+                buffer = new StringBuilder(bufferSize);
+                ComCheck(assemblyName.GetDisplayName(buffer, ref bufferSize, AssemblyNameDisplayFlags.Full));
+            }
+            else
+            {
+                ComCheck(hResult);
+            }
 
-            return sDisplayName.ToString();
+            return buffer.ToString();
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        private static int ComCheck(int errorCode)
+        private static int ComCheck(int hResult)
         {
-            if (errorCode != 0) // S_OK
+            if (hResult != 0) // S_OK
             {
-                Marshal.ThrowExceptionForHR(errorCode);
+                Marshal.ThrowExceptionForHR(hResult);
             }
 
-            return errorCode;
+            return hResult;
         }
 
         private static IAssemblyCache GetAssemblyCache()

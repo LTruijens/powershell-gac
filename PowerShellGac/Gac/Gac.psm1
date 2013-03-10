@@ -14,7 +14,7 @@
 .PARAMETER AssemblyName
     Specifies the assembly name to be tested
 .INPUTS
-	[System.Reflection.AssemblyName]
+	[System.Reflection.AssemblyName[]]
 .EXAMPLE
     C:\PS> Test-AssemblyNameFullyQualified 'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, ProcessorArchitecture=MSIL'
 	True
@@ -34,12 +34,14 @@ function Test-AssemblyNameFullyQualified
     [OutputType('System.Boolean')]
 	param
     (
-        # TODO: AssemblyName[]
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
         [ValidateNotNullOrEmpty()]
-        [System.Reflection.AssemblyName] $AssemblyName
+        [System.Reflection.AssemblyName[]] $AssemblyName
     )
-	[PowerShellGac.GlobalAssemblyCache]::IsFullyQualifiedAssemblyName($AssemblyName)
+    foreach ($assmName in $AssemblyName)
+    {
+	    [PowerShellGac.GlobalAssemblyCache]::IsFullyQualifiedAssemblyName($assmName)
+    }
 }
 
 <#
@@ -165,7 +167,7 @@ function Get-GacAssembly
 .PARAMETER AssemblyName
     Specifies the assembly name. Must be fully qualified. See Test-AssemblyNameFullyQualified.
 .INPUTS
-	[System.Reflection.AssemblyName]
+	[System.Reflection.AssemblyName[]]
 .EXAMPLE
     C:\PS> Get-GacAssembly -Name System -Version 4.0.0.0 | Get-GacAssemblyFile | Copy-Item -Destination C:\Temp
 
@@ -190,17 +192,19 @@ function Get-GacAssemblyFile
     [OutputType('System.IO.FileInfo')]
 	param
     (
-        # TODO: AssemblyName[]
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript( { Test-AssemblyNameFullyQualified $_ } )]
-        [System.Reflection.AssemblyName] $AssemblyName
+        [System.Reflection.AssemblyName[]] $AssemblyName
 	)
 
     process
     {
-        $path = [PowerShellGac.GlobalAssemblyCache]::GetAssemblyPath($AssemblyName);
-        [System.IO.FileInfo] $path
+        foreach ($assmName in $AssemblyName)
+        {
+            $path = [PowerShellGac.GlobalAssemblyCache]::GetAssemblyPath($assmName);
+            [System.IO.FileInfo] $path
+        }
     }
 }
 
@@ -213,7 +217,7 @@ function Get-GacAssemblyFile
 .PARAMETER AssemblyName
     Specifies the assembly name. Must be fully qualified. See Test-AssemblyNameFullyQualified.
 .INPUTS
-	[System.Reflection.AssemblyName]
+	[System.Reflection.AssemblyName[]]
 .EXAMPLE
     C:\PS> Get-GacAssembly -Name System | Get-GacAssemblyInstallReference
 	
@@ -234,16 +238,18 @@ function Get-GacAssemblyInstallReference
     [OutputType('PowerShellGac.InstallReference')]
 	param
     (
-        # TODO: AssemblyName[]
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript( { Test-AssemblyNameFullyQualified $_ } )]
-        [System.Reflection.AssemblyName] $AssemblyName
+        [System.Reflection.AssemblyName[]] $AssemblyName
 	)
 
     process
     {
-        [PowerShellGac.GlobalAssemblyCache]::GetInstallReferences($AssemblyName)
+        foreach ($assmName in $AssemblyName)
+        {
+            [PowerShellGac.GlobalAssemblyCache]::GetInstallReferences($AssemblyName)
+        }
     }
 }
 
@@ -278,6 +284,7 @@ function Add-GacAssembly
 	param
     (
         # TODO: string[]
+        # TODO: LiteralPath
         # TODO: http://stackoverflow.com/questions/8505294/how-do-i-deal-with-paths-when-writing-a-powershell-cmdlet
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
         [ValidateNotNullOrEmpty()]
@@ -334,7 +341,7 @@ function Add-GacAssembly
 .PARAMETER PassThru
 	The AssemblyName removed is used as the output
 .INPUTS
-	[System.Reflection.AssemblyName]
+	[System.Reflection.AssemblyName[]]
 .EXAMPLE
     C:\PS> Get-GacAssembly -Name SomeAssembly | Remove-GacAssembly
 
@@ -350,11 +357,10 @@ function Remove-GacAssembly
     [OutputType('System.Reflection.AssemblyName')]
 	param
     (
-        # TODO: AssemblyName[]
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript( { Test-AssemblyNameFullyQualified $_ } )]
-        [System.Reflection.AssemblyName] $AssemblyName,
+        [System.Reflection.AssemblyName[]] $AssemblyName,
 
         [Parameter(Position = 1)]
         [PowerShellGac.InstallReference] $InstallReference,
@@ -364,55 +370,58 @@ function Remove-GacAssembly
 
     process
     {
-        $fullyQualifiedAssemblyName = [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($AssemblyName)
-
-        if (!$PSCmdLet.ShouldProcess($fullyQualifiedAssemblyName))
+        foreach ($assmName in $AssemblyName)
         {
-            return;
-        }
+			$fullyQualifiedAssemblyName = [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($assmName)
 
-        $disp = [PowerShellGac.GlobalAssemblyCache]::UninstallAssembly($AssemblyName, $InstallReference) 
+			if (!$PSCmdLet.ShouldProcess($fullyQualifiedAssemblyName))
+			{
+				return;
+			}
+
+			$disp = [PowerShellGac.GlobalAssemblyCache]::UninstallAssembly($assmName, $InstallReference) 
         
-        switch ($disp)
-        {
-            Unknown
-            {
-                Write-Error -Message 'Unknown Error' -Category InvalidResult -TargetObject $AssemblyName
-            }
-            Uninstalled
-            {
-                Write-Verbose "Removed $fullyQualifiedAssemblyName from the GAC"
-            }
-            StillInUse
-            {
-                Write-Error -Message 'Still in use' -Category PermissionDenied -TargetObject $AssemblyName
-            }
-            AlreadyUninstalled
-            {
-                Write-Error -Message 'Already uninstalled' -Category NotInstalled -TargetObject $AssemblyName
-            }
-            DeletePending
-            {
-                Write-Error -Message 'Delete pending' -Category ResourceBusy -TargetObject $AssemblyName
-            }
-            HasInstallReference
-            {
-                Write-Error -Message 'Has install reference' -Category PermissionDenied -TargetObject $AssemblyName
-            }
-            ReferenceNotFound
-            {
-                Write-Error -Message 'Reference not found' -Category ObjectNotFound -TargetObject $AssemblyName
-            }
-            default 
-            {
-                Write-Error -Message "Unknown Error: $disp" -Category InvalidResult -TargetObject $AssemblyName
-            }
-            }
+			switch ($disp)
+			{
+				Unknown
+				{
+					Write-Error -Message 'Unknown Error' -Category InvalidResult -TargetObject $assmName
+				}
+				Uninstalled
+				{
+					Write-Verbose "Removed $fullyQualifiedAssemblyName from the GAC"
+				}
+				StillInUse
+				{
+					Write-Error -Message 'Still in use' -Category PermissionDenied -TargetObject $assmName
+				}
+				AlreadyUninstalled
+				{
+					Write-Error -Message 'Already uninstalled' -Category NotInstalled -TargetObject $assmName
+				}
+				DeletePending
+				{
+					Write-Error -Message 'Delete pending' -Category ResourceBusy -TargetObject $assmName
+				}
+				HasInstallReference
+				{
+					Write-Error -Message 'Has install reference' -Category PermissionDenied -TargetObject $assmName
+				}
+				ReferenceNotFound
+				{
+					Write-Error -Message 'Reference not found' -Category ObjectNotFound -TargetObject $assmName
+				}
+				default 
+				{
+					Write-Error -Message "Unknown Error: $disp" -Category InvalidResult -TargetObject $assmName
+				}
+			}
 
-            if ($PassThru)
-            {
-                $AssemblyName
-            }
+			if ($PassThru)
+			{
+				$assmName
+			}
+        }
     }
 }
 
