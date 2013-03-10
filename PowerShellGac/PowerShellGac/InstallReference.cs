@@ -5,8 +5,6 @@ using System.Text;
 
 namespace PowerShellGac
 {
-    // TODO : Why StructLayout and MarshalAs?
-    // Better display
     [StructLayout(LayoutKind.Sequential)]
     public class InstallReference
     {
