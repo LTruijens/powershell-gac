@@ -38,6 +38,7 @@ function Test-AssemblyNameFullyQualified
         [ValidateNotNullOrEmpty()]
         [System.Reflection.AssemblyName[]] $AssemblyName
     )
+
     foreach ($assmName in $AssemblyName)
     {
 	    [PowerShellGac.GlobalAssemblyCache]::IsFullyQualifiedAssemblyName($assmName)
@@ -62,7 +63,7 @@ function Test-AssemblyNameFullyQualified
 .PARAMETER AssemblyName
     Filter on AssemblyName. Must be fully qualified. See Test-AssemblyNameFullyQualified.
 .INPUTS
-	[System.Reflection.AssemblyName]
+	[System.Reflection.AssemblyName[]]
 .EXAMPLE
     C:\PS> Get-GacAssembly
 
@@ -82,78 +83,134 @@ function Get-GacAssembly
     [OutputType('System.Reflection.AssemblyName')]
 	param
     (
-        # TODO: string[]
         [Parameter(Position = 0, ParameterSetName = 'PartsSet')]
         [ValidateNotNullOrEmpty()] 
-        [string] $Name,
+        [string[]] $Name,
 
         [Parameter(Position = 1, ParameterSetName = 'PartsSet')]
         [ValidateNotNullOrEmpty()]
-        [string] $Version,
+        [string[]] $Version,
 
         [Parameter(Position = 2, ParameterSetName = 'PartsSet')]
         [ValidateNotNull()]
-        [string] $Culture,
+        [string[]] $Culture,
 
         [Parameter(Position = 3, ParameterSetName = 'PartsSet')]
         [ValidateNotNullOrEmpty()]
-        [string] $PublicKeyToken,
+        [string[]] $PublicKeyToken,
 
         [Parameter(Position = 4, ParameterSetName = 'PartsSet')]
-        [System.Reflection.ProcessorArchitecture] $ProcessorArchitecture,
+        [System.Reflection.ProcessorArchitecture[]] $ProcessorArchitecture,
 
-        # TODO: AssemblyName[]
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'AssemblyNameSet')]
         [ValidateScript( { Test-AssemblyNameFullyQualified $_ } )]
-        [System.Reflection.AssemblyName] $AssemblyName
+        [System.Reflection.AssemblyName[]] $AssemblyName
 	)
-    
-    begin
-    {
-        if ($PsCmdlet.ParameterSetName -eq 'AssemblyNameSet')
-        {
-            $fullyQualifiedAssemblyName = [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($AssemblyName)
-        }
-        else
-        {
-            $fullyQualifiedAssemblyName = $null
-        }
-    }
 
     process
     {
-        foreach ($assembly in [PowerShellGac.GlobalAssemblyCache]::GetAssemblies())
+        if ($PsCmdlet.ParameterSetName -eq 'AssemblyNameSet')
         {
-            if ($fullyQualifiedAssemblyName -and $assembly.ToString() -eq $fullyQualifiedAssemblyName)
+            $fullNames = @()
+            foreach ($assmName in $AssemblyName)
             {
-                continue
-            }
-            if ($Name -and $assembly.Name -notlike $Name)
-            {
-                continue
-            }
-            if ($Version -and $assembly.Version -notlike $Version)
-            {
-                continue
-            }
-            if ($Culture -eq 'neutral' -and !$assembly.CultureInfo.Equals([System.Globalization.CultureInfo]::InvariantCulture))
-            {
-                continue
-            }
-            if ($PSBoundParameters.ContainsKey('Culture') -and $Culture -ne 'neutral' -and $assembly.CultureInfo -notlike $Culture)
-            {
-                continue
-            }
-            if ($PublicKeyToken -and $assembly.PublicKeyToken -notlike $PublicKeyToken)
-            {
-                continue
-            }
-            if ($PSBoundParameters.ContainsKey('ProcessorArchitecture') -and $assembly.ProcessorArchitecture -ne $ProcessorArchitecture)
-            {
-                continue;
+                $fullNames += [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($assmName)
             }
 
-            $assembly    
+            foreach ($assembly in [PowerShellGac.GlobalAssemblyCache]::GetAssemblies())
+            {
+                $fullyQualifiedAssemblyName = [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($assembly)
+                foreach ($fullName in $fullNames)
+                {
+                    if ($fullyQualifiedAssemblyName -eq $fullName)
+                    {
+                        $assembly
+                        break
+                    } 
+                }
+            }
+        }
+        else
+        {
+            foreach ($assembly in [PowerShellGac.GlobalAssemblyCache]::GetAssemblies())
+            {
+                $hit = $false
+                foreach ($n in $Name)
+                {
+                    if ($assembly.Name -like $n)
+                    {
+                        $hit = $true
+                        break
+                    }
+                }
+                if ($Name -and -not $hit)
+                {
+                    continue
+                }
+
+                $hit = $false
+                foreach ($v in $Version)
+                {
+                    if ($assembly.Version -like $v)
+                    {
+                        $hit = $true
+                        break
+                    }
+                }
+                if ($Version -and -not $hit)
+                {
+                    continue
+                }
+
+                $hit = $false
+                foreach ($c in $Culture)
+                {
+                    if ($c -eq 'neutral' -and $assembly.CultureInfo.Equals([System.Globalization.CultureInfo]::InvariantCulture))
+                    {
+                        $hit = $true
+                        break
+                    }
+                    if ($c -ne 'neutral' -and $assembly.CultureInfo -like $c)
+                    {
+                        $hit = $true
+                        break
+                    }
+                }
+                if ($Culture -and -not $hit)
+                {
+                    continue
+                }
+
+                $hit = $false
+                foreach ($p in $PublicKeyToken)
+                {
+                    if ($assembly.PublicKeyToken -like $p)
+                    {
+                        $hit = $true
+                        break
+                    }
+                }
+                if ($PublicKeyToken -and -not $hit)
+                {
+                    continue
+                }    
+
+                $hit = $false
+                foreach ($p in $ProcessorArchitecture)
+                {
+                    if ($assembly.ProcessorArchitecture -eq $p)
+                    {
+                        $hit = $true
+                        break
+                    }
+                }
+                if ($ProcessorArchitecture -and -not $hit)
+                {
+                    continue
+                }           
+
+                $assembly
+            }
         }
     }
 }
@@ -279,22 +336,22 @@ function Get-GacAssemblyInstallReference
 #>
 function Add-GacAssembly
 {
-	[CmdletBinding(SupportsShouldProcess = $true)]
+	[CmdletBinding(SupportsShouldProcess = $true, DefaultParameterSetName = 'PathSet')]
     [OutputType('string')]
 	param
     (
-        # TODO: string[]
-        # TODO: LiteralPath
-        # TODO: http://stackoverflow.com/questions/8505294/how-do-i-deal-with-paths-when-writing-a-powershell-cmdlet
-        [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
+        [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'PathSet')]
+        [ValidateNotNullOrEmpty()]
+        [string[]] $Path,
+
+        [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'LiteralPathSet')]
         [ValidateNotNullOrEmpty()]
         [Alias('PSPath')]
-        [string] $Path,
+        [string[]] $LiteralPath,
 
         [Parameter(Position = 1)]
         [PowerShellGac.InstallReference] $InstallReference,
 
-        # The files of an existing assembly are overwritten regardless of their file version number.
         [Switch] $Force,
 
         [Switch] $PassThru
@@ -311,21 +368,35 @@ function Add-GacAssembly
             $flags = 'Refresh'
         }
 
-        if (!$PSCmdLet.ShouldProcess($Path))
+        if ($PsCmdlet.ParameterSetName -eq 'PathSet')
         {
-            return;
+            $paths = @()
+            foreach ($p in $Path)
+            {
+                $paths += Resolve-Path $p
+            }    
+        }
+        else
+        {
+            $paths = $LiteralPath
         }
 
-        $Path = Resolve-Path $Path
-
-        [PowerShellGac.GlobalAssemblyCache]::InstallAssembly($Path, $InstallReference, $flags);
-        Write-Verbose "Installed $Path into the GAC"
-
-        if ($PassThru)
+        foreach ($p in $paths)
         {
-            # TODO : AssemblyName
-            $Path
-        }
+            if (!$PSCmdLet.ShouldProcess($p))
+            {
+                continue;
+            }
+
+            [PowerShellGac.GlobalAssemblyCache]::InstallAssembly($p, $InstallReference, $flags);
+            Write-Verbose "Installed $p into the GAC"
+
+            if ($PassThru)
+            {
+                # TODO : AssemblyName
+                $p
+            }
+        }    
     }
 }
 
@@ -376,7 +447,7 @@ function Remove-GacAssembly
 
 			if (!$PSCmdLet.ShouldProcess($fullyQualifiedAssemblyName))
 			{
-				return;
+				continue;
 			}
 
 			$disp = [PowerShellGac.GlobalAssemblyCache]::UninstallAssembly($assmName, $InstallReference) 
