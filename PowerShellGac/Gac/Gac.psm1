@@ -114,12 +114,12 @@ function Get-GacAssembly
             $fullNames = @()
             foreach ($assmName in $AssemblyName)
             {
-                $fullNames += [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($assmName)
+                $fullNames += $assmName.FullyQualifiedName
             }
 
             foreach ($assembly in [PowerShellGac.GlobalAssemblyCache]::GetAssemblies())
             {
-                $fullyQualifiedAssemblyName = [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($assembly)
+                $fullyQualifiedAssemblyName = $assembly.FullyQualifiedName
                 foreach ($fullName in $fullNames)
                 {
                     if ($fullyQualifiedAssemblyName -eq $fullName)
@@ -443,7 +443,7 @@ function Remove-GacAssembly
     {
         foreach ($assmName in $AssemblyName)
         {
-			$fullyQualifiedAssemblyName = [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($assmName)
+			$fullyQualifiedAssemblyName = $assmName.FullyQualifiedName
 
 			if (!$PSCmdLet.ShouldProcess($fullyQualifiedAssemblyName))
 			{
