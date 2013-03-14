@@ -9,7 +9,12 @@
           ($this.GetPublicKeyToken() | ForEach-Object { '{0:x2}' -f $_ }) -join ''
         </GetScriptBlock>
       </ScriptProperty>
-      <!-- DisplayName -->
+      <ScriptProperty>
+        <Name>FullyQualifiedName</Name>
+        <GetScriptBlock>
+          [PowerShellGac.GlobalAssemblyCache]::GetFullyQualifiedAssemblyName($this)
+        </GetScriptBlock>
+      </ScriptProperty>
     </Members>
   </Type>
 </Types>
