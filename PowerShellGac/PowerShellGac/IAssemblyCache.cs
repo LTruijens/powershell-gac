@@ -14,7 +14,7 @@ namespace PowerShellGac
                             int flags,
                             [MarshalAs(UnmanagedType.LPWStr)]
                              String assemblyName,
-                            InstallReference refData,
+                            FusionInstallReference refData,
                             out AssemblyCacheUninstallDisposition disposition);
 
         [PreserveSig()]
@@ -38,6 +38,6 @@ namespace PowerShellGac
                             int flags,
                             [MarshalAs(UnmanagedType.LPWStr)]
                              String assemblyFilePath,
-                            InstallReference refData);
+                            FusionInstallReference refData);
     }
 }

@@ -1,45 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace PowerShellGac
 {
-    [StructLayout(LayoutKind.Sequential)]
     public class InstallReference
     {
-        public InstallReference(Guid guid, String id, String data)
+        public InstallReference(InstallReferenceType type, string identifier, string description)
         {
-            cbSize = (int)(2 * IntPtr.Size + 16 + (id.Length + data.Length) * 2);
-            flags = 0;
-            // quiet compiler warning
-            if (flags == 0) { }
-            guidScheme = guid;
-            identifier = id;
-            description = data;
+            Type = type;
+            Identifier = identifier;
+            Description = description;
         }
 
-        public Guid GuidScheme
-        {
-            get { return guidScheme; }
-        }
+        public InstallReferenceType Type { get; private set; }
+        public string Identifier { get; private set; }
+        public string Description { get; private set; }
 
-        public String Identifier
+        public bool CanBeUsed()
         {
-            get { return identifier; }
+            return Type == InstallReferenceType.Installer || Type == InstallReferenceType.FilePath || Type == InstallReferenceType.Opaque;
         }
-
-        public String Description
-        {
-            get { return description; }
-        }
-
-        int cbSize;
-        int flags;
-        Guid guidScheme;
-        [MarshalAs(UnmanagedType.LPWStr)]
-        String identifier;
-        [MarshalAs(UnmanagedType.LPWStr)]
-        String description;
     }
 }

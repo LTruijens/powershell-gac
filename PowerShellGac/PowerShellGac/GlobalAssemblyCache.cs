@@ -44,26 +44,40 @@ namespace PowerShellGac
             return buffer.ToString();
         }
 
-        public static void InstallAssembly(String path, InstallReference reference, AssemblyCommitFlags flags)
+        public static void InstallAssembly(String path, InstallReference reference, bool force)
         {
             if (path == null)
             {
                 throw new ArgumentNullException("path");
             }
+
+            AssemblyCommitFlags flags;
+            if (force)
+            {
+                flags = AssemblyCommitFlags.ForceRefresh;
+            }
+            else
+            {
+                flags = AssemblyCommitFlags.Refresh;
+            }
+
+            FusionInstallReference fusionReference = null;
             if (reference != null)
             {
-                if (!InstallReferenceGuid.IsValidGuidScheme(reference.GuidScheme))
+                if (!reference.CanBeUsed())
                 {
-                    throw new ArgumentException("Invalid reference guid.", "guid");
+                    throw new ArgumentException("InstallReferenceType can not be used", "reference");
                 }
+
+                fusionReference = new FusionInstallReference(reference.Type, reference.Identifier, reference.Description);
             }
 
             var assemblyCache = GetAssemblyCache();
 
-            ComCheck(assemblyCache.InstallAssembly((int)flags, path, reference));
+            ComCheck(assemblyCache.InstallAssembly((int)flags, path, fusionReference));
         }
 
-        public static AssemblyCacheUninstallDisposition UninstallAssembly(AssemblyName assemblyName, InstallReference reference)
+        public static UninstallResult UninstallAssembly(AssemblyName assemblyName, InstallReference reference)
         {
             if (assemblyName == null)
             {
@@ -74,20 +88,23 @@ namespace PowerShellGac
                 throw new ArgumentOutOfRangeException("assemblyName", assemblyName, "Must be a fully qualified assembly name");
             }
 
+            FusionInstallReference fusionReference = null;
             if (reference != null)
             {
-                if (!InstallReferenceGuid.IsValidGuidScheme(reference.GuidScheme))
+                if (!reference.CanBeUsed())
                 {
-                    throw new ArgumentException("Invalid reference guid.", "guid");
+                    throw new ArgumentException("InstallReferenceType can not be used", "reference");
                 }
+
+                fusionReference = new FusionInstallReference(reference.Type, reference.Identifier, reference.Description);
             }
 
             var assemblyCache = GetAssemblyCache();
 
-            AssemblyCacheUninstallDisposition dispResult = AssemblyCacheUninstallDisposition.Uninstalled;
-            ComCheck(assemblyCache.UninstallAssembly(0, assemblyName.GetFullyQualifiedName(), reference, out dispResult));
+            AssemblyCacheUninstallDisposition disposition = AssemblyCacheUninstallDisposition.Uninstalled;
+            ComCheck(assemblyCache.UninstallAssembly(0, assemblyName.GetFullyQualifiedName(), fusionReference, out disposition));
 
-            return dispResult;
+            return (UninstallResult)disposition;
         }
 
         public static IEnumerable<InstallReference> GetInstallReferences(AssemblyName assemblyName)
@@ -111,9 +128,13 @@ namespace PowerShellGac
                 IntPtr refData;
                 ComCheck(item.GetReference(out refData, 0, IntPtr.Zero));
 
-                InstallReference installReference = new InstallReference(Guid.Empty, String.Empty, String.Empty);
-                Marshal.PtrToStructure(refData, installReference);
-                yield return installReference;
+                FusionInstallReference fusionReference = new FusionInstallReference();
+                Marshal.PtrToStructure(refData, fusionReference);
+
+                var reference = new InstallReference(InstallReferenceGuid.ToType(fusionReference.GuidScheme), fusionReference.Identifier,
+                    fusionReference.NonCanonicalData);
+
+                yield return reference;
             } while (true);
         }
 
