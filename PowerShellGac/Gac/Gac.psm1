@@ -426,7 +426,7 @@ function Get-GacAssemblyInstallReference
 .PARAMETER Force
 	Force the addition to the GAC even if the file version of the assembly already in the GAC is higher
 .PARAMETER PassThru
-	The path of the assembly added is used as the output
+	The AssemblyName removed is returned as output
 .INPUTS
 	[string]
 .EXAMPLE
@@ -503,7 +503,7 @@ function Add-GacAssembly
 .PARAMETER InstallReference
 	Specifies the InstallReference used to remove the assembly from the GAC.
 .PARAMETER PassThru
-	The AssemblyName removed is used as the output
+	The AssemblyName removed is returned as output
 .INPUTS
 	[System.Reflection.AssemblyName[]]
 .EXAMPLE
