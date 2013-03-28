@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PowerShellGac
 {
-    public enum AssemblyCommitFlags
+    internal enum AssemblyCommitFlags
     {
         Refresh = 1,
         ForceRefresh = 2

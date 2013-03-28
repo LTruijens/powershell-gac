@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PowerShellGac
 {
-    internal enum AssemblyCacheUninstallDisposition
+    public enum UninstallResult
     {
         Unknown = 0,
         Uninstalled = 1,

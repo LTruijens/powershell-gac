@@ -59,11 +59,14 @@
     <Compile Include="IAssemblyName.cs" />
     <Compile Include="IInstallReference.cs" />
     <Compile Include="IInstallReferenceEnum.cs" />
+    <Compile Include="FusionInstallReference.cs" />
     <Compile Include="InstallReference.cs" />
     <Compile Include="InstallReferenceGuid.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryAssemblyInfoFlags.cs" />
+    <Compile Include="UninstallResult.cs" />
+    <Compile Include="InstallReferenceType.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

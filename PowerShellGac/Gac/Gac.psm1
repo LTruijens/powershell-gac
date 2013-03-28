@@ -2,29 +2,32 @@
 
 <#
 .SYNOPSIS
-    Determines whether the assembly name if fully qualified
+    Determines whether the assembly name is fully qualified
 .DESCRIPTION
-    Determines whether the assembly name if fully qualified. An assembly name is fully qualified if
+    Determines whether the assembly name is fully qualified. An assembly name is fully qualified if
 	it contains all the following parts:
 	* Name
 	* Version
 	* Culture
 	* PublicKeyToken
 	* ProcessorArchitecture
+
+    Note that the ProcessorArchitecture always has a valid default value of None. Test-AssemblyNameFullyQualified 
+	also returns True if only the ProcessorArchitecture is not specified.
 .PARAMETER AssemblyName
     Specifies the assembly name to be tested
 .INPUTS
 	[System.Reflection.AssemblyName[]]
 .EXAMPLE
     C:\PS> Test-AssemblyNameFullyQualified 'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, ProcessorArchitecture=MSIL'
-	True
-	C:\PS> Test-AssemblyNameFullyQualified 'System, Version=2.0.0.0'
-	False
+	
+    True
+	
+    C:\PS> Test-AssemblyNameFullyQualified 'System, Version=2.0.0.0'
+	
+    False
 
     This example shows how you can determine if the assembly name is fully qualified.
-.NOTES
-	Note that the ProcessorArchitecture always has a valid default value of None. Test-AssemblyNameFullyQualified 
-	returns True if only the ProcessorArchitecture is not specified.
 .LINK
 	http://powershellgac.codeplex.com
 #>
@@ -38,11 +41,110 @@ function Test-AssemblyNameFullyQualified
         [ValidateNotNullOrEmpty()]
         [System.Reflection.AssemblyName[]] $AssemblyName
     )
-
-    foreach ($assmName in $AssemblyName)
+	
+	process
     {
-	    [PowerShellGac.GlobalAssemblyCache]::IsFullyQualifiedAssemblyName($assmName)
-    }
+		foreach ($assmName in $AssemblyName)
+		{
+			[PowerShellGac.GlobalAssemblyCache]::IsFullyQualifiedAssemblyName($assmName)
+		}
+	}
+}
+
+<#
+.SYNOPSIS
+    Determines whether the install reference can be used
+.DESCRIPTION
+    Determines whether the install reference can be used with Add-GacAssembly and Remove-GacAssembly. Only types Installer, 
+    FilePath en Opaque can be used. WindowsInstaller and OsInstall not.
+.PARAMETER InstallReference
+    Specifies the install reference to be tested
+.INPUTS
+	[PowerShellGac.InstallReference[]]
+.EXAMPLE
+    C:\PS> Test-GacAssemblyInstallReferenceCanBeUsed (New-GacAssemblyInstallReference Opaque ([guid]::NewGuid()))
+	
+    True
+	
+    C:\PS> Test-GacAssemblyInstallReferenceCanBeUsed (New-GacAssemblyInstallReference WindowsInstaller 'MSI')
+	
+    False
+
+    This example shows how you can determine if the install reference can be used.
+.LINK
+	Add-GacAssembly
+.LINK
+	Remove-GacAssembly
+.LINK
+	http://powershellgac.codeplex.com
+#>
+function Test-GacAssemblyInstallReferenceCanBeUsed
+{
+	[CmdletBinding()]
+    [OutputType('System.Boolean')]
+	param
+    (
+        [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
+        [ValidateNotNullOrEmpty()]
+        [PowerShellGac.InstallReference[]] $InstallReference
+    )
+	
+	process
+    {
+		foreach ($reference in $InstallReference)
+		{
+			$reference.CanBeUsed()
+		}
+	}
+}
+
+<#
+.SYNOPSIS
+    Creates a new install reference
+.DESCRIPTION
+    Creates a new install reference to be used with Add-GacAssembly or Remove-GacAssembly
+.PARAMETER Type
+    Specifies the type of the install reference to be created
+.PARAMETER Identifier
+    Specifies the identifier of the install reference to be created
+.PARAMETER Description
+    Specifies the description of the install reference to be created
+.INPUTS
+	[PowerShellGac.InstallReference[]]
+.EXAMPLE
+    C:\PS> $reference = New-GacAssemblyInstallReference Opaque ([guid]::NewGuid()) 'Sample install reference'
+
+    This example shows how you can create a new install reference.
+.LINK
+	Add-GacAssembly
+.LINK
+	Remove-GacAssembly
+.LINK
+	http://powershellgac.codeplex.com
+#>
+function New-GacAssemblyInstallReference
+{
+	[CmdletBinding()]
+    [OutputType('PowerShellGac.InstallReference')]
+	param
+    (
+        [Parameter(Position = 0, Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [PowerShellGac.InstallReferenceType] $Type,
+
+        [Parameter(Position = 1, Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $Identifier,
+
+        [Parameter(Position = 2)]
+        [ValidateNotNullOrEmpty()]
+        [string] $Description
+    )
+	
+	process
+    {
+		New-Object -TypeName 'PowerShellGac.InstallReference' -ArgumentList $Type, $Identifier, $Description
+	}
 }
 
 <#
@@ -232,9 +334,9 @@ function Get-GacAssembly
 .EXAMPLE
     C:\PS> (Get-GacAssembly -Name System | Get-GacAssemblyFile).VersionInfo
 
-	ProductVersion   FileVersion      FileName
-	--------------   -----------      --------
-	2.0.50727.6401   2.0.50727.640... C:\Windows\assembly\GAC_MSIL\System\2.0.0.0__b77a5c561934e089\System.dll
+    ProductVersion   FileVersion      FileName
+    --------------   -----------      --------
+    2.0.50727.6401   2.0.50727.640... C:\Windows\assembly\GAC_MSIL\System\2.0.0.0__b77a5c561934e089\System.dll
 	4.0.30319.18033  4.0.30319.180... C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\S...
 
     This example returns the VersionInfo all System assemblies in the GAC.
@@ -259,7 +361,7 @@ function Get-GacAssemblyFile
     {
         foreach ($assmName in $AssemblyName)
         {
-            $path = [PowerShellGac.GlobalAssemblyCache]::GetAssemblyPath($assmName);
+            $path = [PowerShellGac.GlobalAssemblyCache]::GetAssemblyPath($assmName)
             [System.IO.FileInfo] $path
         }
     }
@@ -278,10 +380,10 @@ function Get-GacAssemblyFile
 .EXAMPLE
     C:\PS> Get-GacAssembly -Name System | Get-GacAssemblyInstallReference
 	
-	GuidScheme                              Identifier                              Description
-	----------                              ----------                              -----------
-	2ec93463-b0c3-45e1-8364-327e96aea856    {71F8EFBF-09AF-418D-91F1-52707CDFA274}  .NET Framework Redist Setup
-	2ec93463-b0c3-45e1-8364-327e96aea856    {71F8EFBF-09AF-418D-91F1-52707CDFA274}  .NET Framework Redist Setup
+    Type             Identifier                                          Description
+	----             ----------                                          -----------
+	Opaque           {71F8EFBF-09AF-418D-91F1-52707CDFA274}              .NET Framework Redist Setup
+    Opaque           {71F8EFBF-09AF-418D-91F1-52707CDFA274}              .NET Framework Redist Setup
 
     This example returns the InstallReferences from the System assemblies in the GAC.
 .LINK
@@ -305,7 +407,7 @@ function Get-GacAssemblyInstallReference
     {
         foreach ($assmName in $AssemblyName)
         {
-            [PowerShellGac.GlobalAssemblyCache]::GetInstallReferences($AssemblyName)
+            [PowerShellGac.GlobalAssemblyCache]::GetInstallReferences($assmName)
         }
     }
 }
@@ -350,6 +452,7 @@ function Add-GacAssembly
         [string[]] $LiteralPath,
 
         [Parameter(Position = 1)]
+        [ValidateScript( { Test-GacAssemblyInstallReferenceCanBeUsed $_ } )]
         [PowerShellGac.InstallReference] $InstallReference,
 
         [Switch] $Force,
@@ -359,15 +462,6 @@ function Add-GacAssembly
 
     process
     {
-        if ($Force)
-        {
-            $flags = 'ForceRefresh'
-        }
-        else
-        {
-            $flags = 'Refresh'
-        }
-
         if ($PsCmdlet.ParameterSetName -eq 'PathSet')
         {
             $paths = @()
@@ -385,16 +479,15 @@ function Add-GacAssembly
         {
             if (!$PSCmdLet.ShouldProcess($p))
             {
-                continue;
+                continue
             }
 
-            [PowerShellGac.GlobalAssemblyCache]::InstallAssembly($p, $InstallReference, $flags);
+            [PowerShellGac.GlobalAssemblyCache]::InstallAssembly($p, $InstallReference, $Force)
             Write-Verbose "Installed $p into the GAC"
 
             if ($PassThru)
             {
-                # TODO : AssemblyName
-                $p
+                [System.Reflection.AssemblyName]::GetAssemblyName($p)
             }
         }    
     }
@@ -408,7 +501,7 @@ function Add-GacAssembly
 .PARAMETER AssemblyName
     Specifies the assembly name. Must be fully qualified. See Test-AssemblyNameFullyQualified.
 .PARAMETER InstallReference
-	Specifies the InstallReference used to add the assembly to the GAC
+	Specifies the InstallReference used to remove the assembly from the GAC.
 .PARAMETER PassThru
 	The AssemblyName removed is used as the output
 .INPUTS
@@ -434,6 +527,7 @@ function Remove-GacAssembly
         [System.Reflection.AssemblyName[]] $AssemblyName,
 
         [Parameter(Position = 1)]
+        [ValidateScript( { Test-GacAssemblyInstallReferenceCanBeUsed $_ } )]
         [PowerShellGac.InstallReference] $InstallReference,
 
         [Switch] $PassThru
@@ -447,7 +541,7 @@ function Remove-GacAssembly
 
 			if (!$PSCmdLet.ShouldProcess($fullyQualifiedAssemblyName))
 			{
-				continue;
+				continue
 			}
 
 			$disp = [PowerShellGac.GlobalAssemblyCache]::UninstallAssembly($assmName, $InstallReference) 
@@ -502,4 +596,4 @@ Update-FormatData -PrependPath (Join-Path $PSScriptRoot 'Gac.Format.ps1xml')
 
 Set-Alias -Name gga -Value Get-GacAssembly
 Export-ModuleMember -Function Get-GacAssembly -Alias gga
-Export-ModuleMember -Function Test-AssemblyNameFullyQualified, Get-GacAssemblyFile, Get-GacAssemblyInstallReference, Add-GacAssembly, Remove-GacAssembly
+Export-ModuleMember -Function Test-AssemblyNameFullyQualified, Test-GacAssemblyInstallReferenceCanBeUsed, New-GacAssemblyInstallReference, Get-GacAssemblyFile, Get-GacAssemblyInstallReference, Add-GacAssembly, Remove-GacAssembly
