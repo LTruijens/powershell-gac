@@ -419,14 +419,18 @@ function Get-GacAssemblyInstallReference
     Adds the assembly to the GAC. An assembly is only added to the GAC if the assembly is not already added to
 	the GAC or if the file version is higher than the assembly already in the GAC. Can only be called from an 
 	elevated prompt.
+
+	 It must be a strong named/signed assembly (PublicKeyToken must be set).
 .PARAMETER Path
-    Specifies the path to the assembly. It must be a strong named/signed assembly (PublicKeyToken must be set).
+    Specifies the path to the assembly. Wildcards are permitted.
+.PARAMETER LiteralPath
+    Specifies the path to the assembly. Unlike Path, the value of the LiteralPath parameter is used exactly as it is typed. No characters are interpreted as wildcards.
 .PARAMETER InstallReference
 	Specifies the InstallReference to add the assembly to the GAC
 .PARAMETER Force
 	Force the addition to the GAC even if the file version of the assembly already in the GAC is higher
 .PARAMETER PassThru
-	The AssemblyName removed is returned as output
+	The AssemblyName added is returned as output
 .INPUTS
 	[string]
 .EXAMPLE
