@@ -558,11 +558,11 @@ function Remove-GacAssembly
 				}
 				StillInUse
 				{
-					Write-Error -Message 'Still in use' -Category PermissionDenied -TargetObject $assmName
+					Write-Error -Message 'Still in use. An application is using the assembly.' -Category PermissionDenied -TargetObject $assmName
 				}
 				AlreadyUninstalled
 				{
-					Write-Error -Message 'Already uninstalled' -Category NotInstalled -TargetObject $assmName
+					Write-Error -Message 'Already uninstalled. The assembly does not exist in the GAC.' -Category NotInstalled -TargetObject $assmName
 				}
 				DeletePending
 				{
@@ -570,11 +570,11 @@ function Remove-GacAssembly
 				}
 				HasInstallReference
 				{
-					Write-Error -Message 'Has install reference' -Category PermissionDenied -TargetObject $assmName
+					Write-Error -Message 'Has install reference. The assembly has not been removed from the GAC because another install reference exists.' -Category PermissionDenied -TargetObject $assmName
 				}
 				ReferenceNotFound
 				{
-					Write-Error -Message 'Reference not found' -Category ObjectNotFound -TargetObject $assmName
+					Write-Error -Message 'Reference not found. The reference that is specified is not found in the GAC' -Category ObjectNotFound -TargetObject $assmName
 				}
 				default 
 				{
