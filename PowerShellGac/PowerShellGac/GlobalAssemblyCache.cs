@@ -25,16 +25,35 @@ namespace PowerShellGac
             } while (fusionAssemblyName != null);
         }
 
-        public static String GetAssemblyCachePath()
+        public static String GetAssemblyCacheClr2Path()
         {
             int bufferSize = 512;
             StringBuilder buffer = new StringBuilder(bufferSize);
 
-            int hResult = FusionApi.GetCachePath(AssemblyCacheFlags.Gac, buffer, ref bufferSize);
+            int hResult = FusionApi.GetCachePath(AssemblyCacheFlags.Root, buffer, ref bufferSize);
             if ((uint)hResult == 0x8007007A)  // ERROR_INSUFFICIENT_BUFFER
             {
                 buffer = new StringBuilder(bufferSize);
-                ComCheck(FusionApi.GetCachePath(AssemblyCacheFlags.Gac, buffer, ref bufferSize));
+                ComCheck(FusionApi.GetCachePath(AssemblyCacheFlags.Root, buffer, ref bufferSize));
+            }
+            else
+            {
+                ComCheck(hResult);
+            }
+
+            return buffer.ToString();
+        }
+
+        public static String GetAssemblyCacheClr4Path()
+        {
+            int bufferSize = 512;
+            StringBuilder buffer = new StringBuilder(bufferSize);
+
+            int hResult = FusionApi.GetCachePath(AssemblyCacheFlags.RootEx, buffer, ref bufferSize);
+            if ((uint)hResult == 0x8007007A)  // ERROR_INSUFFICIENT_BUFFER
+            {
+                buffer = new StringBuilder(bufferSize);
+                ComCheck(FusionApi.GetCachePath(AssemblyCacheFlags.RootEx, buffer, ref bufferSize));
             }
             else
             {
