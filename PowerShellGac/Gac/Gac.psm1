@@ -2,14 +2,14 @@
 
 Set-StrictMode -Version Latest
 
-. .\Test-AssemblyNameFullyQualified.ps1
-. .\Test-GacAssemblyInstallReferenceCanBeUsed.ps1
-. .\New-GacAssemblyInstallReference.ps1
-. .\Get-GacAssembly.ps1
-. .\Get-GacAssemblyFile.ps1
-. .\Get-GacAssemblyInstallReference.ps1
-. .\Add-GacAssembly.ps1
-. .\Remove-GacAssembly.ps1
+. $PSScriptRoot\Test-AssemblyNameFullyQualified.ps1
+. $PSScriptRoot\Test-GacAssemblyInstallReferenceCanBeUsed.ps1
+. $PSScriptRoot\New-GacAssemblyInstallReference.ps1
+. $PSScriptRoot\Get-GacAssembly.ps1
+. $PSScriptRoot\Get-GacAssemblyFile.ps1
+. $PSScriptRoot\Get-GacAssemblyInstallReference.ps1
+. $PSScriptRoot\Add-GacAssembly.ps1
+. $PSScriptRoot\Remove-GacAssembly.ps1
 
 Update-FormatData -PrependPath (Join-Path $PSScriptRoot 'Gac.Format.ps1xml')
 
