@@ -57,12 +57,12 @@ function Add-GacAssembly
             $paths = @()
             foreach ($p in $Path)
             {
-                $paths += Resolve-Path $p
+                $paths += (Resolve-Path $p).ProviderPath
             }    
         }
         else
         {
-            $paths = $LiteralPath
+            $paths = (Resolve-Path -LiteralPath $LiteralPath).ProviderPath
         }
 
         foreach ($p in $paths)
