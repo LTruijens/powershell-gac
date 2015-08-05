@@ -42,6 +42,7 @@ function Add-GacAssembly
         [string[]] $LiteralPath,
 
         [Parameter(Position = 1)]
+		[ValidateNotNullOrEmpty()]
         [ValidateScript( { Test-GacAssemblyInstallReferenceCanBeUsed $_ } )]
         [PowerShellGac.InstallReference] $InstallReference,
 

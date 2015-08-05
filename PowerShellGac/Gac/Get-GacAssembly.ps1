@@ -45,7 +45,7 @@ function Get-GacAssembly
         [string[]] $Version,
 
         [Parameter(Position = 2, ParameterSetName = 'PartsSet')]
-        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
         [string[]] $Culture,
 
         [Parameter(Position = 3, ParameterSetName = 'PartsSet')]
@@ -53,9 +53,11 @@ function Get-GacAssembly
         [string[]] $PublicKeyToken,
 
         [Parameter(Position = 4, ParameterSetName = 'PartsSet')]
+		[ValidateNotNullOrEmpty()]
         [System.Reflection.ProcessorArchitecture[]] $ProcessorArchitecture,
 
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'AssemblyNameSet')]
+		[ValidateNotNullOrEmpty()]
         [ValidateScript( { Test-AssemblyNameFullyQualified $_ } )]
         [System.Reflection.AssemblyName[]] $AssemblyName
 	)
