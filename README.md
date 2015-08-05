@@ -42,6 +42,6 @@ Add-GacAssembly C:\Temp\SomeCompany\*.dll
 
 PowerShell 2.0 or higher
 
-## Documentation
+## Installation
 
-For more installation and usage instructions see Documentation
+Installation instructions can be found [here](INSTALL.md).
