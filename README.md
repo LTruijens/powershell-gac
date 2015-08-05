@@ -1,4 +1,4 @@
-# powershell-gac
+# PowerShell GAC
 
 The Global Assembly Cache (GAC) is a machine wide repository for .Net Assemblies. PowerShell GAC provides several PowerShell commands to view and modify the GAC.
 
