@@ -6,7 +6,7 @@ PowerShell GAC works standalone and does not depend on tools like gacutils.exe. 
 
 ## Features
 
-Supports GAC for all .Net versions, including .Net 4.0 en .Net 4.5.
+Supports GAC for all .Net versions, including .Net 4.0 and .Net 4.6.
 
 Commands:
 * Get-GacAssembly Gets the assemblies in the GAC (alias gga)
