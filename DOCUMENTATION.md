@@ -34,6 +34,6 @@ Gacutil is a command line tool to view and modify the GAC. It has almost the sam
 
 # Build instructions for developers
 
-Uses the [GAC](https://support.microsoft.com/kb/317540)\[Fusion](https://msdn.microsoft.com/en-us/library/ms404523.aspx) API to do its magic.
+Uses the [GAC](https://support.microsoft.com/kb/317540) or [Fusion](https://msdn.microsoft.com/en-us/library/ms404523.aspx) API to do its magic.
 
 Use VisualStudio 2010 or 2012 to open the solution or build from the commandline with `MSBuild.exe PowerShellGac.csproj`. No need for VisualStudio.
