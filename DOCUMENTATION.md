@@ -1,3 +1,15 @@
+# Usage instructions
+
+* [Get-GacAssembly](Get-GacAssembly.md) Gets the assemblies in the GAC (alias gga)
+* [Get-GacAssemblyFile](Get-GacAssemblyFile.md) Gets the FileInfo of assemblies in the GAC
+* [Get-GacAssemblyInstallReference](Get-GacAssemblyInstallReference.md) Gets the InstallReference of assemblies in the GAC
+* [Add-GacAssembly](Add-GacAssembly.md) Adds the assembly to the GAC
+* [Remove-GacAssembly](Remove-GacAssembly.md) Removes the assembly from the GAC
+* [New-GacAssemblyInstallReference](New-GacAssemblyInstallReference.md) Creates a new install reference
+* [Test-AssemblyNameFullyQualified](Test-AssemblyNameFullyQualified.md) Determines whether the assembly name is fully qualified
+* [Test-GacAssemblyInstallReferenceCanBeUsed](Test-GacAssemblyInstallReferenceCanBeUsed.md) Determines whether the install reference can be used with Add-GacAssembly and Remove-GacAssembly
+* [FileVersion Table View](FileVersionTableView.md) Adds column showing the FileVersion
+
 # Alternatives
 
 There are some alternatives to PowerShell GAC to view are modify the contents of the GAC. PowerShell GAC has the following advantages compare to some of these alternatives:
