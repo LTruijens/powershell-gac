@@ -1,6 +1,6 @@
 # Get-GacAssembly
 
-Gets the assemblies in the GAC
+Gets the assemblies in the GAC. Assemblies can be filterd by Name, Version, Culture, PublicKeyToken or ProcessArchitecture.
 
 ## SYNTAX
 ```powershell
@@ -8,8 +8,6 @@ Get-GacAssembly [[-Name] <String[]>] [[-Version] <String[]>] [[-Culture] <String
 
 Get-GacAssembly [-AssemblyName] <AssemblyName[]> [<CommonParameters>]
 ````
-## DESCRIPTION
-Gets the assemblies in the GAC. Assemblies can be filterd by Name, Version, Culture, PublicKeyToken or ProcessArchitecture.
 
 ## PARAMETERS
 ```powershell
