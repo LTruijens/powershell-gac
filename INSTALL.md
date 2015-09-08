@@ -1,5 +1,21 @@
 # Installation instructions
 
+## PowerShell 5 and Windows 10
+
+Install from [PowerShell Gallery](https://www.powershellgallery.com/packages/Gac)
+```powershell
+Install-Module Gac
+```
+
+## Chocolatey
+
+Install from [Chocolatey](https://chocolatey.org/packages/PowerShellGAC)
+```powershell
+choco install powershellgac
+```
+
+## Otherwise
+
 1. Download PowerShell GAC
 2. Right click the zip file and choose Properties. Click Unblock and Ok. Or use PowerShell to unblock with [Unblock-File](https://technet.microsoft.com/en-us/library/hh849924.aspx). 
   ![example of properties](http://blogs.technet.com/resized-image.ashx/__size/550x0/__key/communityserver-blogs-components-weblogfiles/00-00-00-76-18/6813.HSG_2D00_7_2D00_18_2D00_11_2D00_02.png)
