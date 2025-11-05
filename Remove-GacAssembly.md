@@ -15,7 +15,7 @@ Specifies the assembly name. Must be fully qualified. See Test-AssemblyNameFully
 ```powershell
 -InstallReference <InstallReference>
 ```
-Specifies the InstallReference used to add the assembly to the GAC
+Specifies the InstallReference to remove from the assembly in the GAC. When an InstallReference is specified, only that reference is removed. The assembly is only removed from the GAC if no other install references exist.
 ```powershell
 -PassThru [<SwitchParameter>]
 ```
@@ -38,3 +38,9 @@ OutBuffer and OutVariable.
 C:\PS>Get-GacAssembly -Name SomeAssembly | Remove-GacAssembly
 ```
 This example removes all assemblies with the name SomeAssembly from the GAC.
+
+```powershell
+C:\PS>$ref = New-GacAssemblyInstallReference -Type Opaque -Id "MyApp" -Description "My Application"
+C:\PS>Get-GacAssembly -Name SomeAssembly | Remove-GacAssembly -InstallReference $ref
+```
+This example removes the specific install reference from the assembly. If other install references exist, the assembly remains in the GAC.

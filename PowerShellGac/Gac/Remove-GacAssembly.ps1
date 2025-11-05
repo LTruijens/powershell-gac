@@ -6,7 +6,9 @@
 .PARAMETER AssemblyName
     Specifies the assembly name. Must be fully qualified. See Test-AssemblyNameFullyQualified.
 .PARAMETER InstallReference
-	Specifies the InstallReference used to remove the assembly from the GAC.
+	Specifies the InstallReference to remove from the assembly in the GAC.
+	When an InstallReference is specified, only that reference is removed.
+	The assembly is only removed from the GAC if no other install references exist.
 .PARAMETER PassThru
 	The AssemblyName removed is returned as output
 .INPUTS
@@ -15,6 +17,12 @@
     C:\PS> Get-GacAssembly -Name SomeAssembly | Remove-GacAssembly
 
     This example removes all assemblies with the name SomeAssembly from the GAC.
+.EXAMPLE
+    C:\PS> $ref = New-GacAssemblyInstallReference -Type Opaque -Id "MyApp" -Description "My Application"
+    C:\PS> Get-GacAssembly -Name SomeAssembly | Remove-GacAssembly -InstallReference $ref
+
+    This example removes the specific install reference from the assembly.
+    If other install references exist, the assembly remains in the GAC.
 .LINK
 	Test-AssemblyNameFullyQualified
 .LINK
@@ -76,13 +84,20 @@ function Remove-GacAssembly
 				}
 				HasInstallReference
 				{
-					Write-Error -Message 'Has install reference. The assembly has not been removed from the GAC because another install reference exists.' -Category PermissionDenied -TargetObject $assmName
+					if ($InstallReference)
+					{
+						Write-Verbose "Removed install reference for $fullyQualifiedAssemblyName. The assembly remains in the GAC because other install references exist."
+					}
+					else
+					{
+						Write-Error -Message 'Has install reference. The assembly has not been removed from the GAC because another install reference exists.' -Category PermissionDenied -TargetObject $assmName
+					}
 				}
 				ReferenceNotFound
 				{
 					Write-Error -Message 'Reference not found. The reference that is specified is not found in the GAC' -Category ObjectNotFound -TargetObject $assmName
 				}
-				default 
+				default
 				{
 					Write-Error -Message "Unknown Error: $disp" -Category InvalidResult -TargetObject $assmName
 				}
